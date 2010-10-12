@@ -19,19 +19,24 @@ uint8_t RB7 = 1;
 #else
 #include <htc.h>
 
-// WORKAROUND FOR LACK OF uint8_t
-#define uint8_t char
+// WORKAROUND: stdint to pic type
+typedef unsigned char  uint8_t;
+typedef signed char    int8_t;
+typedef unsigned int   uint16_t;
+typedef signed int     int16_t;
+typedef signed long    int32_t;
 
 #define OPCODE RA1
 #define DATA RA0
 #define CLK RA7
 #endif /* TEST */
 
-//uint8_t parityc;
-uint8_t kbd_start;
-uint8_t host_start;
+volatile uint8_t kbd_start;
+volatile uint8_t host_start;
+uint8_t hasht[11];
 
 /* Scancodes */
+#define BREAK (uint8_t) 0xF0
 #define PREFIX (uint8_t) 0xE0
 #define UP (uint8_t) 0x75
 #define DOWN (uint8_t) 0x72
@@ -45,24 +50,9 @@ uint8_t host_start;
 #define R (uint8_t) 0x2D
 /* End scancodes */
 
-/*
-const uint8_t parityt[] = 
-{
-  0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 
-  1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 
-  1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 
-  0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 
-  1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 
-  0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 
-  0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 
-  1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 
-  1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 
-  0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 
-  0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 
-  1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 
-  0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 
-  1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 
-  1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 
-  0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0
-};*/
+#define DelayUs(x)\
+asm("\tMOVLW "___mkstr(x>>2));\
+asm("\tADDLW 0xFF");\
+asm("\tBTFSS _STATUS, 2");\
+asm("\tGOTO $ - 2");
 

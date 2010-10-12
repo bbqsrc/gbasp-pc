@@ -3,7 +3,7 @@ SRCS	:= picps2.c
 OBJS	:= ${SRCS:.c=.o} 
 PICC    := picc
 PPATH   := /opt/picc-pro
-MINGW   := i686-pc-mingw
+MINGW   := i686-pc-mingw32
 CHIP    := 16f627a
 
 PICFLAGS = -Q -DPICTEST 
