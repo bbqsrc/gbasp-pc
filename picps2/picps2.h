@@ -26,6 +26,12 @@ typedef unsigned int   uint16_t;
 typedef signed int     int16_t;
 typedef signed long    int32_t;
 
+#define usleep(x)\
+asm("\tMOVLW "___mkstr(x>>2));\
+asm("\tADDLW 0xFF");\
+asm("\tBTFSS _STATUS, 2");\
+asm("\tGOTO $ - 2");
+
 #define OPCODE RA1
 #define DATA RA0
 #define CLK RA7
@@ -49,10 +55,4 @@ uint8_t hasht[11];
 #define L (uint8_t) 0x4B
 #define R (uint8_t) 0x2D
 /* End scancodes */
-
-#define DelayUs(x)\
-asm("\tMOVLW "___mkstr(x>>2));\
-asm("\tADDLW 0xFF");\
-asm("\tBTFSS _STATUS, 2");\
-asm("\tGOTO $ - 2");
 

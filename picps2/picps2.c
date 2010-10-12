@@ -36,14 +36,10 @@ uint8_t *ht(uint8_t x)
 
 void clk_set()
 {
-#ifdef TEST
-	usleep(33);
-#else
-	DelayUs(16);
+	usleep(16);
 	CLK = 1;
-	DelayUs(16);
+	usleep(16);
 	CLK = 0;
-#endif
 }
 
 void clk_wait()
@@ -69,6 +65,7 @@ void io_change_interrupt()
 {
 	return; //stub
 }
+
 void send(uint8_t sc) // INTERRUPT: ignited when one of the inputs is true
 {
 	if(sc != BREAK && *ht(sc) == 1)
@@ -110,6 +107,7 @@ void send(uint8_t sc) // INTERRUPT: ignited when one of the inputs is true
 
 	clk_wait();
 	DATA = 1; // Send end bit (1)
+	CLK = 0xFF;
 
 #ifdef TEST
 	printf("|%d\n", DATA);
@@ -189,7 +187,7 @@ int main()
 #ifndef TEST // protects from non-useful code
 	// set PORTA to digital here!
 	TRISA0 = 0; // sets CLK to output mode
-
+	CLK = 1; // Init on HIGH
 #endif
 	return 0;
 }
