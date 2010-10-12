@@ -56,3 +56,8 @@ uint8_t hasht[11];
 #define R (uint8_t) 0x2D
 /* End scancodes */
 
+typedef struct {
+	uint8_t *name;
+	uint8_t scancode;
+	uint8_t enabled;
+} Button;
