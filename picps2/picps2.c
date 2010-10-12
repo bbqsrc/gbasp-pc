@@ -5,69 +5,18 @@
 // OPCODE - opcode pin (RA1)
 // RB0-1 - Up,Dn,Lt,Rt
 // RB2-7 - A,B,L,R,Start,Select
-
-
-uint8_t *ht(uint8_t x)
-{
-	switch(x){
-		case UP:
-			return &hasht[0];
-		case DOWN:
-			return &hasht[1];
-		case LEFT:
-			return &hasht[2];
-		case RIGHT:
-			return &hasht[3];
-		case ENTER:
-			return &hasht[4];
-		case BKSP:
-			return &hasht[5];
-		case A:
-			return &hasht[6];
-		case B:
-			return &hasht[7];
-		case L:
-			return &hasht[8];
-		case R:
-			return &hasht[9];
-	}
-	return &hasht[10];
-}
-
-
-// temporary to test output
-#ifdef TEST
-char *otest(uint8_t x)
-{
-	switch(x){
-		case UP:
-			return "UP";
-		case DOWN:
-			return "DOWN";
-		case LEFT:
-			return "LEFT";
-		case RIGHT:
-			return "RIGHT";
-		case ENTER:
-			return "ENTER";
-		case BKSP:
-			return "BKSP";
-		case A:
-			return "A";
-		case B:
-			return "B";
-		case L:
-			return "L";
-		case R:
-			return "R";
-		case BREAK:
-			return "BREAK";
-		case PREFIX:
-			return "PREFIX";
-	}
-	return "UNKNOWN";
-}
-#endif /* TEST */
+Button ecode = {"BREAK", BREAK};
+Button prefix = {"PREFIX", PREFIX};
+Button up = {"UP", UP};
+Button down = {"DOWN", DOWN};
+Button left = {"LEFT", LEFT};
+Button right = {"RIGHT", RIGHT};
+Button enter = {"ENTER", ENTER};
+Button bksp = {"BKSP", BKSP};
+Button a = {"A", A};
+Button b = {"B", B};
+Button l = {"L", L};
+Button r = {"R", R};
 
 void clk_set()
 {
@@ -101,17 +50,17 @@ void io_change_interrupt()
 	return; //stub
 }
 
-void send(uint8_t sc) // INTERRUPT: ignited when one of the inputs is true
+void send(Button *but) // INTERRUPT: ignited when one of the inputs is true
 {
-	if(sc != BREAK && *ht(sc) == 1)
-		send(BREAK);
+	if(but->scancode != BREAK && but->enabled)
+		send(&ecode);
 		
 	// Clear some vars
 	kbd_start = 1;
 
 #ifdef TEST
-	printf("ht:%d ", *ht(sc));
-	printf("0x%x ", sc);
+	printf("en:%d ", but->enabled);
+	printf("0x%x ", but->scancode);
 #endif
 
 	clk_wait(); // If low, send data:
@@ -126,7 +75,7 @@ void send(uint8_t sc) // INTERRUPT: ignited when one of the inputs is true
 	for (i = 0; i < 8; i++)
 	{
 		clk_wait(); // Check CLK is low
-		DATA = (sc >> i) & 1;
+		DATA = (but->scancode >> i) & 1;
 #ifdef TEST
 		printf("%d", DATA);
 #endif
@@ -134,7 +83,7 @@ void send(uint8_t sc) // INTERRUPT: ignited when one of the inputs is true
 	}
 	// Odd parity bit
 	clk_wait();
-	DATA = parity(sc);
+	DATA = parity(but->scancode);
 
 #ifdef TEST
 	printf("|%d", DATA);
@@ -145,15 +94,15 @@ void send(uint8_t sc) // INTERRUPT: ignited when one of the inputs is true
 	CLK = 0xFF;
 
 #ifdef TEST
-	printf("|%d %s \n", DATA, otest(sc));
+	printf("|%d %s \n", DATA, but->name);
 #endif
 
 	kbd_start = 0;
 	
-	if(sc != BREAK){
-		if(*ht(sc) == 1)
-			*ht(sc) = 0;
-		else *ht(sc) = 1;
+	if(but->scancode != BREAK){
+		if(but->enabled)
+			but->enabled = 0;
+		else but->enabled = 1;
 	}
 	// THE END.
 }
@@ -162,21 +111,21 @@ void dpad_chars()
 {
 	if(OPCODE)
 	{
-		send(PREFIX);
+		send(&prefix);
 		if(!RB0 && !RB1){
-			send(UP);
+			send(&up);
 			return;
 		}
 		if(!RB0 && RB1){
-			send(RIGHT);
+			send(&right);
 			return;
 		}
 		if(RB0 && !RB1){
-			send(LEFT);
+			send(&left);
 			return;
 		}
 		if(RB0 && RB1){
-			send(DOWN);
+			send(&down);
 			return;
 		}
 	}
@@ -187,17 +136,17 @@ void ripple_chars()
 {
 	dpad_chars();
 	if(RB2)
-		send(A);
+		send(&a);
 	if(RB3)
-		send(B);
+		send(&b);
 	if(RB4)
-		send(L);
+		send(&l);
 	if(RB5)
-		send(R);
+		send(&r);
 	if(RB6)
-		send(ENTER);
+		send(&enter);
 	if(RB7)
-		send(BKSP);
+		send(&bksp);
 	return;
 }
 

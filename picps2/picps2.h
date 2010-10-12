@@ -57,7 +57,7 @@ uint8_t hasht[11];
 /* End scancodes */
 
 typedef struct {
-	uint8_t *name;
+	uint8_t name[7];
 	uint8_t scancode;
 	uint8_t enabled;
 } Button;
