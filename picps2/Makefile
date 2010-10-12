@@ -18,6 +18,9 @@ release::
 pic::
 	${PICC} -I${PPATH}/include ${PICFLAGS} --chip=${CHIP} ${SRCS} 
 
+pic-debug::
+	${PICC} -S -I${PPATH}/include ${PICFLAGS} --chip=${CHIP} ${SRCS} 
+
 test-mingw:: 
 	${MINGW}-gcc -o ${TARGET}.exe ${SRCS}
 

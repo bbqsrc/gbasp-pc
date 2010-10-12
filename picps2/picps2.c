@@ -34,6 +34,41 @@ uint8_t *ht(uint8_t x)
 	return &hasht[10];
 }
 
+
+// temporary to test output
+#ifdef TEST
+char *otest(uint8_t x)
+{
+	switch(x){
+		case UP:
+			return "UP";
+		case DOWN:
+			return "DOWN";
+		case LEFT:
+			return "LEFT";
+		case RIGHT:
+			return "RIGHT";
+		case ENTER:
+			return "ENTER";
+		case BKSP:
+			return "BKSP";
+		case A:
+			return "A";
+		case B:
+			return "B";
+		case L:
+			return "L";
+		case R:
+			return "R";
+		case BREAK:
+			return "BREAK";
+		case PREFIX:
+			return "PREFIX";
+	}
+	return "UNKNOWN";
+}
+#endif /* TEST */
+
 void clk_set()
 {
 	usleep(16);
@@ -75,8 +110,8 @@ void send(uint8_t sc) // INTERRUPT: ignited when one of the inputs is true
 	kbd_start = 1;
 
 #ifdef TEST
-	printf("ht:%d\n", *ht(sc));
-	printf("%d\n", sc);
+	printf("ht:%d ", *ht(sc));
+	printf("0x%x ", sc);
 #endif
 
 	clk_wait(); // If low, send data:
@@ -110,7 +145,7 @@ void send(uint8_t sc) // INTERRUPT: ignited when one of the inputs is true
 	CLK = 0xFF;
 
 #ifdef TEST
-	printf("|%d\n", DATA);
+	printf("|%d %s \n", DATA, otest(sc));
 #endif
 
 	kbd_start = 0;
@@ -150,7 +185,7 @@ void dpad_chars()
 
 void ripple_chars()
 {
-	dpad_chars(); // works around lack of else if
+	dpad_chars();
 	if(RB2)
 		send(A);
 	if(RB3)
@@ -172,7 +207,10 @@ void test()
 	printf("PICPS2 TEST RUN, LET'S GO!\n");
 	printf("Parity 0: %d %d %d %d %d\n", PREFIX, UP, LEFT, A, B);
 #endif
-	ripple_chars();
+	int lol;
+	for(lol = 0; lol < 8; lol++){
+		ripple_chars();
+	}
 	return;
 }
 
