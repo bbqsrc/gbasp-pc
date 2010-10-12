@@ -12,16 +12,19 @@ CCFLAGS = -std=gnu99 -DTEST
 .PHONY: all clean distclean test  
 all:: pic test test-mingw
 
-pic:: ${SRCS} Makefile
-	${PICC} -I${PPATH}/include ${PICFLAGS} --chip=${CHIP} $< 
+release::
+	${PICC} -I${PPATH}/include --chip=${CHIP} ${SRCS}
 
-test-mingw:: ${SRCS} Makefile
-	${MINGW}-gcc -o ${TARGET}.exe $<
+pic::
+	${PICC} -I${PPATH}/include ${PICFLAGS} --chip=${CHIP} ${SRCS} 
 
-test:: ${SRCS} Makefile
-	${CC} ${CCFLAGS} -o ${TARGET} $<
+test-mingw:: 
+	${MINGW}-gcc -o ${TARGET}.exe ${SRCS}
+
+test:: 
+	${CC} ${CCFLAGS} -o ${TARGET} ${SRCS}
 
 clean:: 
-	-rm -f *~ *.o ${TARGET} 
+	-rm -f *~ *.o ${TARGET} funclist *.as *.cof *.hex *.hxl *.lst *.p1 *.pre *.sdb *.sym *.lst *.obj *.rlf
 
 distclean:: clean
