@@ -7,7 +7,7 @@ MINGW   := i686-pc-mingw32
 CHIP    := 16f627a
 
 PICFLAGS = -Q -DPICTEST 
-CCFLAGS = -std=gnu99 -DTEST
+CCFLAGS = -DTEST
 
 .PHONY: all clean distclean test  
 all:: pic test test-mingw

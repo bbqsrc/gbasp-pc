@@ -15,8 +15,8 @@ asm("\tADDLW 0xFF");\
 asm("\tBTFSS _STATUS, 2");\
 asm("\tGOTO $ - 2");
 
-#define OPCODE RA1
-#define DATA RA0
-#define CLK RA7
+#define DATA_DIR TRISA0
+#define CLK_DIR  TRISA7
+#define BUTS_DIR  TRISB
 
 #endif

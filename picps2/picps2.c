@@ -6,12 +6,6 @@
 
 #include "common.h"
 
-// CLK - clock pin (RA7)
-// DATA - data pin (RA0)
-// OPCODE - opcode pin (RA1)
-// RB0-1 - Up,Dn,Lt,Rt
-// RB2-7 - A,B,L,R,Start,Select
-
 void clk_set()
 {
 	usleep(16);
@@ -40,29 +34,18 @@ uint8_t parity(uint8_t p)
 	return 1;
 }
 
-void io_change_interrupt(uint8_t x)
+void io_change_interrupt()
 {
-	/*if(true) // some interrupt check for setting to 1
-		if(physon[x])
-			physon[x] = 0;
-		else physon[x] = 1;*/
 	return; //stub
 }
 
-void send(uint8_t but) // INTERRUPT: ignited when one of the inputs is true
+void send(uint8_t but) // ignited when one of the inputs is true
 {
-	if(but < DNW && en[but])
-		send(KBDBRK);
-		
 	// Clear some vars
 	kbd_start = 1;
 
 #ifdef TEST
-	printf("but:%x ", but);
-	if(but == KBDBRK)
-		printf("en:X ");
-	else printf("en:%d ", en[but]);
-	printf("0x%x ", sc[but]);
+	printf("%x 0x%x ", but, sc[but]);
 #endif
 
 	clk_wait(); // If low, send data:
@@ -101,33 +84,27 @@ void send(uint8_t but) // INTERRUPT: ignited when one of the inputs is true
 
 	kbd_start = 0;
 	
-	if(but < DNW)
-	{
-		if(en[but])
-			en[but] = 0;
-		else en[but] = 1;
-	}
 	// THE END.
 }
 
 void dpad_chars()
 {
-	if(OPCODE)
+	if(P_DPADE)
 	{
 		send(PREFIX);
-		if(!RB0 && !RB1){
+		if(!P_DPAD0 && !P_DPAD1){
 			send(UP);
 			return;
 		}
-		if(!RB0 && RB1){
+		if(!P_DPAD0 && P_DPAD1){
 			send(RIGHT);
 			return;
 		}
-		if(RB0 && !RB1){
+		if(P_DPAD0 && !P_DPAD1){
 			send(LEFT);
 			return;
 		}
-		if(RB0 && RB1){
+		if(P_DPAD0 && P_DPAD1){
 			send(DOWN);
 			return;
 		}
@@ -135,20 +112,61 @@ void dpad_chars()
 	return;
 }
 
+
+void chk_pins()
+{	
+#ifdef TEST
+	printf("\nSaved:%x, ", saved);
+#endif
+	delta = saved ^ ~P_INPUT;
+	released = (delta & saved);// & 0x3F); // only first 6
+	saved = ~P_INPUT; 
+#ifdef TEST
+	printf("Delta:%x, Rel:%x, NSaved:%x\n", delta, released, saved);
+#endif
+	if (released){
+		if(released & 1<<A){
+			send(KBDBRK);
+			send(A);
+		}
+		if(released & 1<<B){
+			send(KBDBRK);
+			send(B);
+		}
+		if(released & 1<<L){
+			send(KBDBRK);
+			send(L);
+		}
+		if(released & 1<<R){
+			send(KBDBRK);
+			send(R);
+		}
+		if(released & 1<<ENTER){
+			send(KBDBRK);
+			send(ENTER);
+		}
+		if(released & 1<<BKSP){
+			send(KBDBRK);
+			send(BKSP);
+		}		
+	}
+}
+
+
 void ripple_chars()
 {
 	dpad_chars();
-	if(RB2)
+	if(!P_A)
 		send(A);
-	if(RB3)
+	if(!P_B)
 		send(B);
-	if(RB4)
+	if(!P_L)
 		send(L);
-	if(RB5)
+	if(!P_R)
 		send(R);
-	if(RB6)
+	if(!P_START)
 		send(ENTER);
-	if(RB7)
+	if(!P_SELECT)
 		send(BKSP);
 	return;
 }
@@ -159,10 +177,21 @@ void test()
 	printf("PICPS2 TEST RUN, LET'S GO!\n");
 	printf("Parity 0: %d %d %d %d %d\n", PREFIX, UP, LEFT, A, B);
 #endif
-	int lol;
-	for(lol = 0; lol < 8; lol++){
-		ripple_chars();
-	}
+	chk_pins();
+	ripple_chars();
+	P_DPADE = 1;
+	chk_pins();
+	ripple_chars();
+	P_INPUT += 1<<A;
+	P_A = 1;
+	chk_pins();
+	ripple_chars();
+	chk_pins();
+	ripple_chars();
+	chk_pins();
+	ripple_chars();
+	chk_pins();
+	ripple_chars();
 	return;
 }
 
@@ -176,7 +205,8 @@ int main()
 #endif
 #ifndef TEST // protects from non-useful code
 	// set PORTA to digital here!
-	TRISA0 = 0; // sets CLK to output mode
+	CLK_DIR = 0x00; // set CLK to output mode
+	BUTS_DIR = 0xFF; // sets all PORTB to input mode
 	CLK = 1; // Init on HIGH
 #endif
 	return 0;
