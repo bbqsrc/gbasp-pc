@@ -1,6 +1,8 @@
 #ifndef __COMMON_H__
 #define __COMMON_H__
 
+#define SLPT 25 // how many ms to delay
+
 volatile uint8_t kbd_start;
 volatile uint8_t host_start;
 

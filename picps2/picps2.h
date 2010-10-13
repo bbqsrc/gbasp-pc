@@ -19,4 +19,17 @@ asm("\tGOTO $ - 2");
 #define CLK_DIR  TRISA7
 #define BUTS_DIR  TRISB
 
+void sleep(uint8_t cnt)
+{
+        uint8_t i;
+        do {
+                i = 4;
+                do {
+                        usleep(250);
+                        CLRWDT();
+                } while(--i);
+        } while(--cnt);
+}
+
+
 #endif

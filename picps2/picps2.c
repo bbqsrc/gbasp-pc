@@ -34,14 +34,12 @@ uint8_t parity(uint8_t p)
 	return 1;
 }
 
-void io_change_interrupt()
-{
-	return; //stub
-}
-
 void send(uint8_t but) // ignited when one of the inputs is true
 {
 	// Clear some vars
+#ifndef TEST
+	CLK_DIR = 0x00; // output!
+#endif
 	kbd_start = 1;
 
 #ifdef TEST
@@ -176,7 +174,7 @@ void test()
 #ifdef TEST
 	printf("PICPS2 TEST RUN, LET'S GO!\n");
 	printf("Parity 0: %d %d %d %d %d\n", PREFIX, UP, LEFT, A, B);
-#endif
+#ifdef PICTEST
 	chk_pins();
 	ripple_chars();
 	P_DPADE = 1;
@@ -192,6 +190,8 @@ void test()
 	ripple_chars();
 	chk_pins();
 	ripple_chars();
+#endif
+#endif
 	return;
 }
 
@@ -205,9 +205,14 @@ int main()
 #endif
 #ifndef TEST // protects from non-useful code
 	// set PORTA to digital here!
-	CLK_DIR = 0x00; // set CLK to output mode
+	CLK_DIR = 0x01; // set CLK to input mode
 	BUTS_DIR = 0xFF; // sets all PORTB to input mode
-	CLK = 1; // Init on HIGH
+	//CLK = 1; // Init on HIGH
+	while(1){
+		chk_pins();
+		ripple_chars();
+		sleep(SLPT);
+	}
 #endif
 	return 0;
 }
