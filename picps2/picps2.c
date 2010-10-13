@@ -1,22 +1,16 @@
+#if defined(linux) || defined(__APPLE__)
+#include "linuxps2.h"
+#else
 #include "picps2.h"
+#endif
+
+#include "common.h"
 
 // CLK - clock pin (RA7)
 // DATA - data pin (RA0)
 // OPCODE - opcode pin (RA1)
 // RB0-1 - Up,Dn,Lt,Rt
 // RB2-7 - A,B,L,R,Start,Select
-Button ecode = {"BREAK", BREAK};
-Button prefix = {"PREFIX", PREFIX};
-Button up = {"UP", UP};
-Button down = {"DOWN", DOWN};
-Button left = {"LEFT", LEFT};
-Button right = {"RIGHT", RIGHT};
-Button enter = {"ENTER", ENTER};
-Button bksp = {"BKSP", BKSP};
-Button a = {"A", A};
-Button b = {"B", B};
-Button l = {"L", L};
-Button r = {"R", R};
 
 void clk_set()
 {
@@ -35,6 +29,7 @@ void clk_wait()
 uint8_t parity(uint8_t p)
 {
 	switch(p){
+		case KBDBRK:
 		case PREFIX:
 		case UP:
 		case LEFT:
@@ -45,22 +40,29 @@ uint8_t parity(uint8_t p)
 	return 1;
 }
 
-void io_change_interrupt()
+void io_change_interrupt(uint8_t x)
 {
+	/*if(true) // some interrupt check for setting to 1
+		if(physon[x])
+			physon[x] = 0;
+		else physon[x] = 1;*/
 	return; //stub
 }
 
-void send(Button *but) // INTERRUPT: ignited when one of the inputs is true
+void send(uint8_t but) // INTERRUPT: ignited when one of the inputs is true
 {
-	if(but->scancode != BREAK && but->enabled)
-		send(&ecode);
+	if(but < DNW && en[but])
+		send(KBDBRK);
 		
 	// Clear some vars
 	kbd_start = 1;
 
 #ifdef TEST
-	printf("en:%d ", but->enabled);
-	printf("0x%x ", but->scancode);
+	printf("but:%x ", but);
+	if(but == KBDBRK)
+		printf("en:X ");
+	else printf("en:%d ", en[but]);
+	printf("0x%x ", sc[but]);
 #endif
 
 	clk_wait(); // If low, send data:
@@ -75,7 +77,7 @@ void send(Button *but) // INTERRUPT: ignited when one of the inputs is true
 	for (i = 0; i < 8; i++)
 	{
 		clk_wait(); // Check CLK is low
-		DATA = (but->scancode >> i) & 1;
+		DATA = (sc[but] >> i) & 1;
 #ifdef TEST
 		printf("%d", DATA);
 #endif
@@ -83,7 +85,7 @@ void send(Button *but) // INTERRUPT: ignited when one of the inputs is true
 	}
 	// Odd parity bit
 	clk_wait();
-	DATA = parity(but->scancode);
+	DATA = parity(but);
 
 #ifdef TEST
 	printf("|%d", DATA);
@@ -94,15 +96,16 @@ void send(Button *but) // INTERRUPT: ignited when one of the inputs is true
 	CLK = 0xFF;
 
 #ifdef TEST
-	printf("|%d %s \n", DATA, but->name);
+	printf("|%d %s \n", DATA, nm[but]);
 #endif
 
 	kbd_start = 0;
 	
-	if(but->scancode != BREAK){
-		if(but->enabled)
-			but->enabled = 0;
-		else but->enabled = 1;
+	if(but < DNW)
+	{
+		if(en[but])
+			en[but] = 0;
+		else en[but] = 1;
 	}
 	// THE END.
 }
@@ -111,21 +114,21 @@ void dpad_chars()
 {
 	if(OPCODE)
 	{
-		send(&prefix);
+		send(PREFIX);
 		if(!RB0 && !RB1){
-			send(&up);
+			send(UP);
 			return;
 		}
 		if(!RB0 && RB1){
-			send(&right);
+			send(RIGHT);
 			return;
 		}
 		if(RB0 && !RB1){
-			send(&left);
+			send(LEFT);
 			return;
 		}
 		if(RB0 && RB1){
-			send(&down);
+			send(DOWN);
 			return;
 		}
 	}
@@ -136,17 +139,17 @@ void ripple_chars()
 {
 	dpad_chars();
 	if(RB2)
-		send(&a);
+		send(A);
 	if(RB3)
-		send(&b);
+		send(B);
 	if(RB4)
-		send(&l);
+		send(L);
 	if(RB5)
-		send(&r);
+		send(R);
 	if(RB6)
-		send(&enter);
+		send(ENTER);
 	if(RB7)
-		send(&bksp);
+		send(BKSP);
 	return;
 }
 
