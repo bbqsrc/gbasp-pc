@@ -1,3 +1,21 @@
-Placeholder for GBA SP PC. 
+== Gameboy Advance SP PC ==
+
+= Goal = 
+- A fully functional ARM system inside a GBA SP with fully working peripherals such as LCD screen, keypad and USB I/O.
+
+= Planned inclusions =
+- Gumstix board for ARM CPU - TI OMAP 3050 (very small, and powerful :D)
+- 2 x USB Mini B sockets
+- Minature DC input for power
+- PIC to control backlight output and keypad
+- PIC to control AC97 codec for speaker
+- Serial I/O via USB socket
+- Stronger battery to support this
+
+The Gumstix board comes with wifi and bluetooth, so the system will be fully networkable. 
+
+A major stumbling block will be getting the LCD screen to interface with the ARM CPU, and after that, getting Xorg to agree to share the pixels. Once we've hit that point, we know we've succeeded :).
+
+So that's the plan so far. Watch the repo grow over time :)
 
 - Brendan
