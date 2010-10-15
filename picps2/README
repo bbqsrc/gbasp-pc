@@ -1,3 +1,16 @@
+= ... What is it? =
+Well my friends, this is a PS/2 controller implemented in a PIC. Features include:
+- PS/2 interface
+- 6 button presses simultaneously
+- D-Pad input 
+- Proper breaks when keys released
+
+But that's not all. This controller also takes the backlight button into account, with features such as:
+- Backlight control, turning it on and off
+- Hold button down and it will switch USB socket 2 between USB and USART/RS232 etc
+
+This makes the GBA SP into a much more _killer_ device ;)
+
 = Configuration bits for 16F627A =
 
 So you're burning the picps2 nonsense to a PIC. You say "oi, what settings does the twat that wrote it recommend for I care little for specifics but I do want to screw with the chip quite a bit." Well sir/madam, here are the recommended defaults to receive correct functionality (or so I seem to believe).
@@ -11,3 +24,10 @@ CONFIG:
 - PWRTE off
 - WDTE on 
 - FOSC INTOSC OSC, I/O on RA6 and RA7
+
+= How does it compile? =
+Well, I was using Hi-Spec C when I wrote this, so your mileage may vary. If you patch this to compile with another compiler, feel free to submit the patch, and if it's any good, I'll do my best to merge it into upstream :).
+
+If you type make and it fails, have a look inside the Makefile and modify a few variables. I'm too lazy to write an autoconfigure script for this, so you'll have to go all 1992 on its ass :P.
+
+- Brendan 
