@@ -7,7 +7,7 @@ A fully functional ARM system inside a GBA SP with fully working peripherals suc
 
 = Planned inclusions =
 
-  * Gumstix board for ARM CPU * TI OMAP 3050 (very small, and powerful :D)
+  * Gumstix board for ARM CPU - TI OMAP 3050 (very small, and powerful :D)
   * 2 x USB Mini B sockets
   * Minature DC input for power
   * PIC to control backlight output and keypad
