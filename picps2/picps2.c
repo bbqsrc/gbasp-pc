@@ -29,18 +29,54 @@ interrupt
 isr()
 {
 #ifdef PIC
-	//TMR1IE
-	// below is some stubs, do you enjoy stubs
-	if(RBIF){
-		if(BKLT_I) {
-			// Timer check pl0x
-			BKLT_O = ON;
+	if(TMR1IF) {
+		if(int_status <= 0x10)
+			if(!BKLT_I)
+				int_status = 0x00;
+			else int_status--;
+		else if(int_status == 0x01) {
+			if(!BKLT_I)
+				int_status = 0x00;
+			else {
+				int_status--;
+				TMR1H = 0xBD; // These make the counter result in
+				TMR1L = 0xB0; // precisely 1 second delay :)
+			}
 		}
 		else {
-			BKLT_O = OFF;
+			if(USB_SEL) {
+				USB_SEL = OFF;
+				BKLT_O ^= ON;	
+				msleep(300);
+				BKLT_O ^= ON;
+			}
+			else {
+				USB_SEL = ON;  // Flicker backlight to denote
+				BKLT_O ^= ON;
+				msleep(100);    // change in USB socket I/O
+				BKLT_O ^= ON;
+				msleep(100);
+				BKLT_O ^= ON;
+				msleep(100);
+				BKLT_O ^= ON;
+			}
+			TMR1H = TMR1L = 0x00;
+			TMR1ON = OFF;
+		}
+		TMR1IF = OFF;
+		return;
+	}
+	if(RBIF) {
+		if(BKLT_I) {
+			if(int_status > 0x00) {
+				TMR1ON = ON;
+			}
+			else {
+				int_status = 0x10;
+				BKLT_O ^= ON;
+			}
 		}
 		RBIF = OFF;
-		// Do some shit yo
 		return;
 	}
 #endif
@@ -120,28 +156,28 @@ void check_button_release()
 #ifdef TEST
 	printf("Delta:%x, Rel:%x, NSaved:%x\n", delta, released, saved);
 #endif
-	if (released){
-		if(released & 1<<A){
+	if(released) {
+		if(released & 1<<A) {
 			send(KBDBRK);
 			send(A);
 		}
-		if(released & 1<<B){
+		if(released & 1<<B) {
 			send(KBDBRK);
 			send(B);
 		}
-		if(released & 1<<L){
+		if(released & 1<<L) {
 			send(KBDBRK);
 			send(L);
 		}
-		if(released & 1<<R){
+		if(released & 1<<R) {
 			send(KBDBRK);
 			send(R);
 		}
-		if(released & 1<<ENTER){
+		if(released & 1<<ENTER) {
 			send(KBDBRK);
 			send(ENTER);
 		}
-		if(released & 1<<BKSP){
+		if(released & 1<<BKSP) {
 			send(KBDBRK);
 			send(BKSP);
 		}		
@@ -150,22 +186,21 @@ void check_button_release()
 
 void check_dpad()
 {
-	if(P_DPADE)
-	{
+	if(P_DPADE) {
 		send(PREFIX);
-		if(!P_DPAD1 && !P_DPAD0){
+		if(!P_DPAD1 && !P_DPAD0) {
 			send(UP);
 			return;
 		}
-		if(!P_DPAD1 && P_DPAD0){
+		if(!P_DPAD1 && P_DPAD0) {
 			send(RIGHT);
 			return;
 		}
-		if(P_DPAD1 && !P_DPAD0){
+		if(P_DPAD1 && !P_DPAD0) {
 			send(LEFT);
 			return;
 		}
-		if(P_DPAD1 && P_DPAD0){
+		if(P_DPAD1 && P_DPAD0) {
 			send(DOWN);
 			return;
 		}
@@ -209,7 +244,7 @@ void test()
 	return;
 }
 
-uint8_t main()
+void main()
 {
 #ifdef TEST
 	test();
@@ -220,18 +255,20 @@ uint8_t main()
 	P_INPUT = 0x00;
 	CTRL_INPUT = 0x00;
 
-	CMCON = 0x07;      //Turn comparitors off
-	P_MODES = 0xFF;    // sets all DPAD to input mode
-	CTRL_MODES = 0x97; // sets control I/O
+	CMCON = 0x07;      // Turn comparitors off
+	P_MODES = 0xFF;    // sets all button pins to input mode
+	CTRL_MODES = 0xD5; // sets control I/O
+
+	USB_SEL = ON;      // USB I/O by default
 	
 	// Not so portable code appears :o
 
 	RBIE = ON;         // enables CTRL pin interrupts
-
+	TMR1IE = ON;       // enables 16bit timer interrupt
 	#endif
 	/* End Init */
 
-	for(;;){
+	for(;;) {
 		check_button_release();
 		check_button_press();
 		msleep(SLPT);

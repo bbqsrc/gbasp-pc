@@ -11,6 +11,7 @@
 
 volatile uint8_t kbd_start;
 volatile uint8_t host_start;
+volatile uint8_t int_status;
 
 /* Scancode enum */
 #define ENTER  0
@@ -35,13 +36,14 @@ const uint8_t sc[12] = {0x5a, 0x66, 0x1c, 0x32, 0x4b, 0x2d, 0x75, 0x72, 0x6b, 0x
 #define DATA_MODE   TRISB0
 #define CLK_MODE    TRISB7
 
-#define CTRL_MODES  TRISB
+#define CTRL_MODES  TRISB // 0b11010101
 #define CTRL_INPUT  PORTB
 #define DATA     RB0
-#define CLK      RB1
+#define USB_SEL  RB1 // ON = USB, OFF = USART via RS232 or whatever
 #define P_DPADE  RB2
 #define BKLT_O   RB3
 #define BKLT_I   RB4
+#define CLK      RB6
 #define WAKEUP   RB7 //unused, interrupt for all buttons
 
 #define P_MODES  TRISA
