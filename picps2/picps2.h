@@ -1,8 +1,9 @@
 #ifndef __PICPS2_H__
 #define __PICPS2_H__
+#define PIC
 #include <htc.h>
 
-// WORKAROUND: stdint to pic type
+// stdint to pic type
 typedef unsigned char  uint8_t;
 typedef signed char    int8_t;
 typedef unsigned int   uint16_t;
@@ -15,11 +16,7 @@ asm("\tADDLW 0xFF");\
 asm("\tBTFSS _STATUS, 2");\
 asm("\tGOTO $ - 2");
 
-#define DATA_DIR TRISA0
-#define CLK_DIR  TRISA7
-#define BUTS_DIR  TRISB
-
-void sleep(uint8_t cnt)
+void msleep(uint8_t cnt)
 {
         uint8_t i;
         do {

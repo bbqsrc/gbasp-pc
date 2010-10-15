@@ -6,14 +6,11 @@ PPATH   := /opt/picc-pro
 MINGW   := i686-pc-mingw32
 CHIP    := 16f627a
 
-PICFLAGS = -Q -DPICTEST 
+PICFLAGS = -Q 
 CCFLAGS = -DTEST
 
 .PHONY: all clean distclean test  
-all:: pic test test-mingw
-
-release::
-	${PICC} -I${PPATH}/include --chip=${CHIP} ${SRCS}
+all:: test pic
 
 pic::
 	${PICC} -I${PPATH}/include ${PICFLAGS} --chip=${CHIP} ${SRCS} 

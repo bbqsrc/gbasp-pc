@@ -6,21 +6,51 @@
 
 #include "common.h"
 
-void clk_set()
+void clock_set()
 {
-	usleep(16);
-	CLK = 1;
 	usleep(16);
 	CLK = 0;
+	usleep(16);
+	CLK = 1;
 }
 
-void clk_wait()
+void clock_wait()
 {
-	clk_set(); // nice hack, probably not good
+	clock_set(); // nice hack, probably not good
 	return;
 }
 
-uint8_t parity(uint8_t p)
+
+#ifndef PIC
+void
+#else
+interrupt
+#endif
+isr()
+{
+#ifdef PIC
+	//TMR1IE
+	// below is some stubs, do you enjoy stubs
+	if(RBIF){
+		RBIF = 0;
+		return;
+	}
+	if(RBIE){
+		RBIE = 0;
+		return;
+	}
+	if(BKLT_I){
+		// Timer check pl0x
+		BKLT_O = ON;
+	}
+	else{
+		BKLT_O = OFF;
+	}
+#endif
+	return;
+}
+
+uint8_t parity(const uint8_t p)
 {
 	switch(p){
 		case KBDBRK:
@@ -34,20 +64,17 @@ uint8_t parity(uint8_t p)
 	return 1;
 }
 
-void send(uint8_t but) // ignited when one of the inputs is true
+void send(const uint8_t but) // ignited when one of the inputs is true
 {
-	// Clear some vars
-#ifndef TEST
-	CLK_DIR = 0x00; // output!
-#endif
+	CLK_MODE = OUTPUT; // output!
 	kbd_start = 1;
 
 #ifdef TEST
 	printf("%x 0x%x ", but, sc[but]);
 #endif
 
-	clk_wait(); // If low, send data:
-	DATA = 0;  // Send start bit (0) on clk
+	clock_wait(); // If low, send data:
+	DATA = 0;  // Send start bit (0) on clock
 
 #ifdef TEST
 	printf("%d|", DATA);
@@ -57,7 +84,7 @@ void send(uint8_t but) // ignited when one of the inputs is true
 	int i; // C99 lolwhut
 	for (i = 0; i < 8; i++)
 	{
-		clk_wait(); // Check CLK is low
+		clock_wait(); // Check CLK is low
 		DATA = (sc[but] >> i) & 1;
 #ifdef TEST
 		printf("%d", DATA);
@@ -65,14 +92,14 @@ void send(uint8_t but) // ignited when one of the inputs is true
 		
 	}
 	// Odd parity bit
-	clk_wait();
+	clock_wait();
 	DATA = parity(but);
 
 #ifdef TEST
 	printf("|%d", DATA);
 #endif
 
-	clk_wait();
+	clock_wait();
 	DATA = 1; // Send end bit (1)
 	CLK = 0xFF;
 
@@ -81,44 +108,18 @@ void send(uint8_t but) // ignited when one of the inputs is true
 #endif
 
 	kbd_start = 0;
-	
+	CLK_MODE = INPUT;
 	// THE END.
 }
 
-void dpad_chars()
-{
-	if(P_DPADE)
-	{
-		send(PREFIX);
-		if(!P_DPAD0 && !P_DPAD1){
-			send(UP);
-			return;
-		}
-		if(!P_DPAD0 && P_DPAD1){
-			send(RIGHT);
-			return;
-		}
-		if(P_DPAD0 && !P_DPAD1){
-			send(LEFT);
-			return;
-		}
-		if(P_DPAD0 && P_DPAD1){
-			send(DOWN);
-			return;
-		}
-	}
-	return;
-}
-
-
-void chk_pins()
+void check_button_release()
 {	
 #ifdef TEST
 	printf("\nSaved:%x, ", saved);
 #endif
-	delta = saved ^ ~P_INPUT;
-	released = (delta & saved);// & 0x3F); // only first 6
-	saved = ~P_INPUT; 
+	delta = saved ^ P_INPUT;
+	released = (delta & saved & 0x3F); // only first 6
+	saved = P_INPUT; 
 #ifdef TEST
 	printf("Delta:%x, Rel:%x, NSaved:%x\n", delta, released, saved);
 #endif
@@ -150,21 +151,45 @@ void chk_pins()
 	}
 }
 
-
-void ripple_chars()
+void check_dpad()
 {
-	dpad_chars();
-	if(!P_A)
+	if(P_DPADE)
+	{
+		send(PREFIX);
+		if(!P_DPAD1 && !P_DPAD0){
+			send(UP);
+			return;
+		}
+		if(!P_DPAD1 && P_DPAD0){
+			send(RIGHT);
+			return;
+		}
+		if(P_DPAD1 && !P_DPAD0){
+			send(LEFT);
+			return;
+		}
+		if(P_DPAD1 && P_DPAD0){
+			send(DOWN);
+			return;
+		}
+	}
+	return;
+}
+
+void check_button_press()
+{
+	check_dpad();
+	if(P_A)
 		send(A);
-	if(!P_B)
+	if(P_B)
 		send(B);
-	if(!P_L)
+	if(P_L)
 		send(L);
-	if(!P_R)
+	if(P_R)
 		send(R);
-	if(!P_START)
+	if(P_START)
 		send(ENTER);
-	if(!P_SELECT)
+	if(P_SELECT)
 		send(BKSP);
 	return;
 }
@@ -174,45 +199,40 @@ void test()
 #ifdef TEST
 	printf("PICPS2 TEST RUN, LET'S GO!\n");
 	printf("Parity 0: %d %d %d %d %d\n", PREFIX, UP, LEFT, A, B);
-#ifdef PICTEST
-	chk_pins();
-	ripple_chars();
-	P_DPADE = 1;
-	chk_pins();
-	ripple_chars();
+	check_button_release();
+	check_button_press();
+	//P_DPADE = 1;
+	check_button_release();
+	check_button_press();
 	P_INPUT += 1<<A;
-	P_A = 1;
-	chk_pins();
-	ripple_chars();
-	chk_pins();
-	ripple_chars();
-	chk_pins();
-	ripple_chars();
-	chk_pins();
-	ripple_chars();
-#endif
+	P_A = PRESS;
+	check_button_release();
+	check_button_press();
 #endif
 	return;
 }
 
-int main()
+uint8_t main()
 {
 #ifdef TEST
 	test();
-#endif
-#ifdef PICTEST
-	test();
-#endif
-#ifndef TEST // protects from non-useful code
+#endif // protects from non-useful code
 	// set PORTA to digital here!
-	CLK_DIR = 0x01; // set CLK to input mode
-	BUTS_DIR = 0xFF; // sets all PORTB to input mode
-	//CLK = 1; // Init on HIGH
-	while(1){
-		chk_pins();
-		ripple_chars();
-		sleep(SLPT);
-	}
+	/* Init */
+#ifdef PIC
+	P_INPUT = 0;
+	CTRL_INPUT = 0;
 #endif
-	return 0;
+	CMCON = 0x07;      //Turn comparitors off
+	P_MODES = 0xFF;    // sets all DPAD to input mode
+	CTRL_MODES = 0x97; // sets control I/O
+	CLK_MODE = INPUT;  // set CLK to input mode
+
+	/* End Init */
+
+	for(;;){
+		check_button_release();
+		check_button_press();
+		msleep(SLPT);
+	}
 }
