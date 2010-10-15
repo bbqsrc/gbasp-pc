@@ -32,19 +32,16 @@ isr()
 	//TMR1IE
 	// below is some stubs, do you enjoy stubs
 	if(RBIF){
-		RBIF = 0;
+		if(BKLT_I) {
+			// Timer check pl0x
+			BKLT_O = ON;
+		}
+		else {
+			BKLT_O = OFF;
+		}
+		RBIF = OFF;
+		// Do some shit yo
 		return;
-	}
-	if(RBIE){
-		RBIE = 0;
-		return;
-	}
-	if(BKLT_I){
-		// Timer check pl0x
-		BKLT_O = ON;
-	}
-	else{
-		BKLT_O = OFF;
 	}
 #endif
 	return;
@@ -52,7 +49,7 @@ isr()
 
 uint8_t parity(const uint8_t p)
 {
-	switch(p){
+	switch(p) {
 		case KBDBRK:
 		case PREFIX:
 		case UP:
@@ -220,14 +217,18 @@ uint8_t main()
 	// set PORTA to digital here!
 	/* Init */
 #ifdef PIC
-	P_INPUT = 0;
-	CTRL_INPUT = 0;
-#endif
+	P_INPUT = 0x00;
+	CTRL_INPUT = 0x00;
+
 	CMCON = 0x07;      //Turn comparitors off
 	P_MODES = 0xFF;    // sets all DPAD to input mode
 	CTRL_MODES = 0x97; // sets control I/O
-	CLK_MODE = INPUT;  // set CLK to input mode
+	
+	// Not so portable code appears :o
 
+	RBIE = ON;         // enables CTRL pin interrupts
+
+	#endif
 	/* End Init */
 
 	for(;;){

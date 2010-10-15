@@ -1,0 +1,13 @@
+= Configuration bits for 16F627A =
+
+So you're burning the picps2 nonsense to a PIC. You say "oi, what settings does the twat that wrote it recommend for I care little for specifics but I do want to screw with the chip quite a bit." Well sir/madam, here are the recommended defaults to receive correct functionality (or so I seem to believe).
+
+CONFIG:
+0b001011100
+- CPD off
+- LVP off
+- BOREN on
+- MCLRE off
+- PWRTE off
+- WDTE on 
+- FOSC INTOSC OSC, I/O on RA6 and RA7

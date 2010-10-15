@@ -18,14 +18,14 @@ asm("\tGOTO $ - 2");
 
 void msleep(uint8_t cnt)
 {
-        uint8_t i;
-        do {
-                i = 4;
-                do {
-                        usleep(250);
-                        CLRWDT();
-                } while(--i);
-        } while(--cnt);
+	uint8_t i;
+	do {
+		i = 4;
+		do {
+			usleep(250);
+			CLRWDT();
+		} while(--i);
+	} while(--cnt);
 }
 
 
