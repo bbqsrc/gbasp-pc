@@ -31,19 +31,20 @@ isr()
 #ifdef PIC
 	if(TMR1IF) {
 		if(int_status <= 0x10)
-			if(!BKLT_I)
+			if(BKLT_I)
+				int_status--;
+			else
 				int_status = 0x00;
-			else int_status--;
 		else if(int_status == 0x01) {
-			if(!BKLT_I)
-				int_status = 0x00;
-			else {
+			if(BKLT_I) {
 				int_status--;
 				TMR1H = 0xBD; // These make the counter result in
 				TMR1L = 0xB0; // precisely 1 second delay :)
 			}
+			else
+				int_status = 0x00;
 		}
-		else {
+		else if(int_status == 0x00) {
 			if(USB_SEL) {
 				USB_SEL = OFF;
 				BKLT_O ^= ON;	
